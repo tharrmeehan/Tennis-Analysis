@@ -27,10 +27,8 @@ class BallTracker:
     def get_ball_shot_frames(self, ball_positions):
         ball_positions = [x.get(1, []) for x in ball_positions]
         # List to Pandas dataframe
-        df_ball_positions = (
-            pd.DataFrame(ball_positions, columns=["x1", "y1", "x2", "y2"])
-            .interpolate()  # Interpolate missing frames
-            .bfill()
+        df_ball_positions = pd.DataFrame(
+            ball_positions, columns=["x1", "y1", "x2", "y2"]
         )
 
         df_ball_positions["ball_hit"] = 0
