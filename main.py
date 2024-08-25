@@ -39,6 +39,10 @@ def main():
     # Mini Court
     mini_court = MiniCourt(video_frames[0])
 
+    # Get ball shots
+    ball_shot_frames = ball_tracker.get_ball_shot_frames(ball_detections)
+    print(f"Ball shot frames: {ball_shot_frames}")
+
     # Draw output
     ## Draw bounding boxes around players
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detections)

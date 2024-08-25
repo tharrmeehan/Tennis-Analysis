@@ -24,6 +24,62 @@ class BallTracker:
 
         return [{1: x} for x in df_ball_positions.to_numpy().tolist()]
 
+    def get_ball_shot_frames(self, ball_positions):
+        ball_positions = [x.get(1, []) for x in ball_positions]
+        # List to Pandas dataframe
+        df_ball_positions = (
+            pd.DataFrame(ball_positions, columns=["x1", "y1", "x2", "y2"])
+            .interpolate()  # Interpolate missing frames
+            .bfill()
+        )
+
+        df_ball_positions["ball_hit"] = 0
+
+        df_ball_positions["mid_y"] = (
+            df_ball_positions["y1"] + df_ball_positions["y2"]
+        ) / 2
+        df_ball_positions["mid_y_rolling_mean"] = (
+            df_ball_positions["mid_y"].rolling(10).mean()
+        )
+        df_ball_positions["delta_y"] = df_ball_positions["mid_y_rolling_mean"].diff()
+
+        minimum_changes_to_detect_hit = 25
+        for i in range(
+            1, len(df_ball_positions) - int(minimum_changes_to_detect_hit * 1.2)
+        ):
+            neg_position_change = (
+                df_ball_positions["delta_y"].iloc[i] > 0
+                and df_ball_positions["delta_y"].iloc[i + 1] < 0
+            )
+            pos_position_change = (
+                df_ball_positions["delta_y"].iloc[i] < 0
+                and df_ball_positions["delta_y"].iloc[i + 1] > 0
+            )
+
+            if neg_position_change or pos_position_change:
+                change_count = 0
+                for change_frame in range(
+                    i + 1, i + int(minimum_changes_to_detect_hit * 1.2) + 1
+                ):
+                    neg_position_change_next = (
+                        df_ball_positions["delta_y"].iloc[i] > 0
+                        and df_ball_positions["delta_y"].iloc[change_frame] < 0
+                    )
+                    pos_position_change_next = (
+                        df_ball_positions["delta_y"].iloc[i] < 0
+                        and df_ball_positions["delta_y"].iloc[change_frame] > 0
+                    )
+
+                    if neg_position_change and neg_position_change_next:
+                        change_count += 1
+                    elif pos_position_change and pos_position_change_next:
+                        change_count += 1
+
+                if change_count > minimum_changes_to_detect_hit - 1:
+                    df_ball_positions["ball_hit"].iloc[i] = 1
+
+        return df_ball_positions[df_ball_positions["ball_hit"] == 1].index.tolist()
+
     # This method is used to detect balls in multiple frames.
     def detect_frames(self, frames, read_from_stubs=False, stub_path=None):
         ball_detections = []
