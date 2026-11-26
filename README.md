@@ -27,7 +27,7 @@ input-videos/input_video.mp4
         ▼  output-videos/output_video.avi
 ```
 
-Detection stubs (`tracker_stubs/*.pkl`) cache per-frame detections so the expensive YOLO inference runs only once.
+Detection stubs (`tracker_stubs/*.pkl`) cache per-frame detections so downstream steps can be exercised without running YOLO again. Only load stubs you created or otherwise trust: Python pickle files can execute code when loaded.
 
 ---
 
@@ -51,34 +51,26 @@ Python, PyTorch, Ultralytics YOLOv8, torchvision (ResNet50), OpenCV, pandas
 
 ---
 
-## Production Metrics & Validation
+## Demo Artifacts & Validation
 
-- Tested on broadcast-quality tennis footage at standard frame rates.
-- Stub caching (`read_from_stubs=True`) allows iteration on downstream drawing logic without re-running YOLO inference.
-- Ball interpolation fills detection gaps, producing a smooth trajectory for shot-frame identification.
+- The repository includes a sample input video, a rendered output video, and cached detection stubs; these are existing demo artifacts, not evidence of a fresh end-to-end run.
+- `models/last.pt`, `models/keypoints_model.pth`, `yolov8x.pt`, and `models/best.pt` are tracked, present in the checkout, and stored as binary weight files rather than Git LFS pointer text. The training directory also contains tracked `yolov5l6u.pt` and `yolov8n.pt`.
+- No benchmark or performance claim is made here.
 
 ---
 
 ## Local Replication
 
-Prerequisites: Python 3.8+, CUDA recommended for YOLOv8x inference speed.
+Prerequisites: Python 3.8+ and the dependencies in `requirements.txt`; CUDA is recommended for faster YOLOv8x inference.
 
 ```bash
-git clone https://github.com/tharrmeehan/Tennis-Analysis.git
-cd Tennis-Analysis
-
 pip install -r requirements.txt
-
-# Place a tennis match video at input-videos/input_video.mp4
-# Pretrained models should be present at:
-#   models/last.pt           (ball detector)
-#   models/keypoints_model.pth  (court keypoint detector)
-
 python main.py
-# Output: output-videos/output_video.avi
 ```
 
-To retrain the court keypoint model, see the `training/` directory. YOLOv8x weights are downloaded automatically by Ultralytics on first run.
+`main.py` expects `input-videos/input_video.mp4` and uses the model weights and cached detection stubs at their repository paths. It writes `output-videos/output_video.avi`. The checked-in video, output, and cache are demo artifacts; do not overwrite or remove them if you want to preserve the supplied example. Back up the sample input before replacing it. Only use trusted detection stub pickle files.
+
+The training notebooks are in `training/`. YOLOv8x weights are also tracked at `yolov8x.pt`; Ultralytics may download weights if it does not resolve the local file.
 
 ---
 
